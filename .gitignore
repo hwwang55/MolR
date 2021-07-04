@@ -1,2 +1,5 @@
 # Project exclude paths
 /venv/
+/.idea/
+/src/__pycache__/
+/data/USPTO-479k/

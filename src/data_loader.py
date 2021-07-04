@@ -1,6 +1,7 @@
 import os
 import dgl
 import torch
+import pickle
 import pysmiles
 from collections import defaultdict
 
@@ -9,7 +10,7 @@ attribute_names = ['element', 'charge', 'aromatic', 'hcount']
 
 
 class SmilesDataset(dgl.data.DGLDataset):
-    def __init__(self, args, mode, feature_encoder, raw_graphs):
+    def __init__(self, args, mode, feature_encoder=None, raw_graphs=None):
         self.args = args
         self.mode = mode
         self.feature_encoder = feature_encoder
@@ -18,24 +19,6 @@ class SmilesDataset(dgl.data.DGLDataset):
         self.reactant_graphs = []
         self.product_graphs = []
         super().__init__(name='Smiles_' + mode)
-
-    def to_dgl_graph(self, raw_graph):
-        # add edges
-        src = [s for (s, _) in raw_graph.edges]
-        dst = [t for (_, t) in raw_graph.edges]
-        graph = dgl.graph((src, dst), num_nodes=len(raw_graph.nodes))
-        # add node features
-        node_features = []
-        for i in range(len(raw_graph.nodes)):
-            raw_feature = raw_graph.nodes[i]
-            numerical_feature = [self.feature_encoder[j][raw_feature[j]] for j in attribute_names]
-            node_features.append(numerical_feature)
-        node_features = torch.tensor(node_features)
-        graph.ndata['feature'] = node_features
-        # transform to bi-directed graph with self-loops
-        graph = dgl.to_bidirected(graph, copy_ndata=True)
-        graph = dgl.add_self_loop(graph)
-        return graph
 
     def to_gpu(self):
         if torch.cuda.is_available():
@@ -61,8 +44,8 @@ class SmilesDataset(dgl.data.DGLDataset):
             if i % 10000 == 0:
                 print('%dk' % (i // 1000))
             # transform networkx graphs to dgl graphs
-            reactant_graph = self.to_dgl_graph(raw_reactant_graph)
-            product_graph = self.to_dgl_graph(raw_product_graph)
+            reactant_graph = networkx_to_dgl(raw_reactant_graph, self.feature_encoder)
+            product_graph = networkx_to_dgl(raw_product_graph, self.feature_encoder)
             self.reactant_graphs.append(reactant_graph)
             self.product_graphs.append(product_graph)
         self.to_gpu()
@@ -77,11 +60,37 @@ class SmilesDataset(dgl.data.DGLDataset):
         return len(self.reactant_graphs)
 
 
-def read_data(dataset, mode, all_values):
+def networkx_to_dgl(raw_graph, feature_encoder):
+    # add edges
+    src = [s for (s, _) in raw_graph.edges]
+    dst = [t for (_, t) in raw_graph.edges]
+    graph = dgl.graph((src, dst), num_nodes=len(raw_graph.nodes))
+    # add node features
+    node_features = []
+    for i in range(len(raw_graph.nodes)):
+        raw_feature = raw_graph.nodes[i]
+        numerical_feature = []
+        for j in attribute_names:
+            if raw_feature[j] in feature_encoder[j]:
+                numerical_feature.append(feature_encoder[j][raw_feature[j]])
+            else:
+                numerical_feature.append(feature_encoder[j]['unknown'])
+        node_features.append(numerical_feature)
+    node_features = torch.tensor(node_features)
+    graph.ndata['feature'] = node_features
+    # transform to bi-directed graph with self-loops
+    graph = dgl.to_bidirected(graph, copy_ndata=True)
+    graph = dgl.add_self_loop(graph)
+    return graph
+
+
+def read_data(dataset, mode):
     print('preprocessing %s data...' % mode)
 
-    # lists for saving all possible values of each attribute
+    # saving all possible values of each attribute (only for training data)
+    all_values = defaultdict(set)
     graphs = []
+
     with open('../data/' + dataset + '/' + mode + '.csv') as f:
         for line in f.readlines():
             idx, product_smiles, reactant_smiles, _ = line.strip().split(',')
@@ -89,6 +98,9 @@ def read_data(dataset, mode, all_values):
             # skip the first line
             if len(idx) == 0:
                 continue
+
+            #if int(idx) == 1000:
+            #    break
 
             if int(idx) % 10000 == 0:
                 print('%dk' % (int(idx) // 1000))
@@ -106,15 +118,19 @@ def read_data(dataset, mode, all_values):
             reactant_graph = pysmiles.read_smiles(reactant_smiles, zero_order_bonds=False)
             product_graph = pysmiles.read_smiles(product_smiles, zero_order_bonds=False)
 
-            # store all values
-            for graph in [reactant_graph, product_graph]:
-                for attr in attribute_names:
-                    for _, value in graph.nodes(data=attr):
-                        all_values[attr].add(value)
+            if mode == 'train':
+                # store all values
+                for graph in [reactant_graph, product_graph]:
+                    for attr in attribute_names:
+                        for _, value in graph.nodes(data=attr):
+                            all_values[attr].add(value)
 
             graphs.append([reactant_graph, product_graph])
 
-    return all_values, graphs
+    if mode == 'train':
+        return all_values, graphs
+    else:
+        return graphs
 
 
 def get_feature_encoder(all_values):
@@ -126,45 +142,49 @@ def get_feature_encoder(all_values):
         for value in values:
             feature_encoder[key][value] = idx
             idx += 1
+        # for each attribute, we add an "unknown" key to handle unknown values during inference
+        feature_encoder[key]['unknown'] = idx
+        idx += 1
 
-    return feature_encoder, idx
+    return feature_encoder
 
 
 def preprocess(dataset):
     print('preprocessing %s dataset...' % dataset)
 
     # read all data and get all values for attributes
-    all_values = defaultdict(set)
-    all_values, train_graphs = read_data(dataset, 'train', all_values)
-    all_values, valid_graphs = read_data(dataset, 'valid', all_values)
-    all_values, test_graphs = read_data(dataset, 'test', all_values)
+    all_values, train_graphs = read_data(dataset, 'train')
+    valid_graphs = read_data(dataset, 'valid')
+    test_graphs = read_data(dataset, 'test')
 
     # get one-hot encoder for attribute values
-    feature_encoder, n_values = get_feature_encoder(all_values)
+    feature_encoder = get_feature_encoder(all_values)
 
-    # save n_values to disk
-    print('saving n_values to disk...')
-    with open('../data/' + dataset + '/cache/n_values.txt', 'w') as f:
-        f.writelines('%d' % n_values)
+    # save feature encoder to disk
+    print('saving feature encoder to disk...')
+    with open('../data/' + dataset + '/cache/feature_encoder.pkl', 'wb') as f:
+        pickle.dump(feature_encoder, f)
 
-    return feature_encoder, n_values, train_graphs, valid_graphs, test_graphs
+    return feature_encoder, train_graphs, valid_graphs, test_graphs
 
 
 def load_data(model_args):
     # if datasets are already cached, skip preprocessing
     if os.path.exists('../data/' + model_args.dataset + '/cache/'):
-        print('cache found')
-        feature_encoder, train_graphs, valid_graphs, test_graphs = [None] * 4
-        print('loading n_values from disk...')
-        with open('../data/' + model_args.dataset + '/cache/n_values.txt') as f:
-            n_values = int(f.readline())
+        print('cache found\nloading feature encoder from disk...')
+        with open('../data/' + model_args.dataset + '/cache/feature_encoder.pkl', 'rb') as f:
+            feature_encoder = pickle.load(f)
+        train_dataset = SmilesDataset(model_args, 'train')
+        valid_dataset = SmilesDataset(model_args, 'valid')
+        test_dataset = SmilesDataset(model_args, 'test')
     else:
         print('no cache found')
         os.mkdir('../data/' + model_args.dataset + '/cache/')
-        feature_encoder, n_values, train_graphs, valid_graphs, test_graphs = preprocess(model_args.dataset)
+        feature_encoder, train_graphs, valid_graphs, test_graphs = preprocess(model_args.dataset)
+        train_dataset = SmilesDataset(model_args, 'train', feature_encoder, train_graphs)
+        valid_dataset = SmilesDataset(model_args, 'valid', feature_encoder, valid_graphs)
+        test_dataset = SmilesDataset(model_args, 'test', feature_encoder, test_graphs)
 
-    train_dataset = SmilesDataset(model_args, 'train', feature_encoder, train_graphs)
-    valid_dataset = SmilesDataset(model_args, 'valid', feature_encoder, valid_graphs)
-    test_dataset = SmilesDataset(model_args, 'test', feature_encoder, test_graphs)
+    n_values = sum([len(feature_encoder[key]) for key in attribute_names])
 
     return n_values, train_dataset, valid_dataset, test_dataset
