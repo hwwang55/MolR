@@ -99,9 +99,6 @@ def read_data(dataset, mode):
             if len(idx) == 0:
                 continue
 
-            #if int(idx) == 1000:
-            #    break
-
             if int(idx) % 10000 == 0:
                 print('%dk' % (int(idx) // 1000))
 
@@ -168,23 +165,21 @@ def preprocess(dataset):
     return feature_encoder, train_graphs, valid_graphs, test_graphs
 
 
-def load_data(model_args):
+def load_data(args):
     # if datasets are already cached, skip preprocessing
-    if os.path.exists('../data/' + model_args.dataset + '/cache/'):
+    if os.path.exists('../data/' + args.dataset + '/cache/'):
         print('cache found\nloading feature encoder from disk...')
-        with open('../data/' + model_args.dataset + '/cache/feature_encoder.pkl', 'rb') as f:
+        with open('../data/' + args.dataset + '/cache/feature_encoder.pkl', 'rb') as f:
             feature_encoder = pickle.load(f)
-        train_dataset = SmilesDataset(model_args, 'train')
-        valid_dataset = SmilesDataset(model_args, 'valid')
-        test_dataset = SmilesDataset(model_args, 'test')
+        train_dataset = SmilesDataset(args, 'train')
+        valid_dataset = SmilesDataset(args, 'valid')
+        test_dataset = SmilesDataset(args, 'test')
     else:
         print('no cache found')
-        os.mkdir('../data/' + model_args.dataset + '/cache/')
-        feature_encoder, train_graphs, valid_graphs, test_graphs = preprocess(model_args.dataset)
-        train_dataset = SmilesDataset(model_args, 'train', feature_encoder, train_graphs)
-        valid_dataset = SmilesDataset(model_args, 'valid', feature_encoder, valid_graphs)
-        test_dataset = SmilesDataset(model_args, 'test', feature_encoder, test_graphs)
+        os.mkdir('../data/' + args.dataset + '/cache/')
+        feature_encoder, train_graphs, valid_graphs, test_graphs = preprocess(args.dataset)
+        train_dataset = SmilesDataset(args, 'train', feature_encoder, train_graphs)
+        valid_dataset = SmilesDataset(args, 'valid', feature_encoder, valid_graphs)
+        test_dataset = SmilesDataset(args, 'test', feature_encoder, test_graphs)
 
-    n_values = sum([len(feature_encoder[key]) for key in attribute_names])
-
-    return n_values, train_dataset, valid_dataset, test_dataset
+    return feature_encoder, train_dataset, valid_dataset, test_dataset
