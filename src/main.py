@@ -5,10 +5,10 @@ from property_prediction import pp_dataloader, pp_train
 
 
 def print_setting(args):
-    print('\n========================')
+    print('\n===========================')
     for k, v, in args.__dict__.items():
         print('%s: %s' % (k, v))
-    print('========================\n')
+    print('===========================\n')
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
     parser.add_argument('--fe_file', type=str, default='fe.pkl', help='filename of the feature encoder')
     parser.add_argument('--hp_file', type=str, default='hp.pkl', help='filename of the hyperparameter dictionary')
     parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
-    parser.add_argument('--finetune', type=bool, default=False, help='whether fine-tuning the pretrained model')
+    parser.add_argument('--finetune', type=bool, default=True, help='whether fine-tuning the pretrained model')
     parser.add_argument('--pred_model', type=str, default='lr', help='downstream prediction model if not fine-tune')
     parser.add_argument('--n_epoch', type=int, default=20, help='number of epochs if fine-tune')
     parser.add_argument('--batch_size', type=int, default=128, help='batch size if fine-tune')

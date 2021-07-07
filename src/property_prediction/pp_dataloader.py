@@ -40,7 +40,7 @@ class PropertyPredictionDataset(dgl.data.DGLDataset):
                     continue
                 line = line.strip().split(',')
                 label, smiles = line[-2], line[-1]
-                # the next line is to remove the unnecessary H atoms that will cause discontinuous node labels
+                # the next line is to remove unnecessary hydrogen atoms that will cause discontinuous node labels
                 smiles = smiles.replace('([H])', '').replace('[H]', '')
                 raw_graph = pysmiles.read_smiles(smiles, zero_order_bonds=False)
                 dgl_graph = networkx_to_dgl(raw_graph, feature_encoder)

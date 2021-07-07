@@ -31,8 +31,8 @@ def train(args, data):
         # train
         model.train()
         for reactant_graphs, product_graphs in train_dataloader:
-            reactant_embeddings = model(reactant_graphs, reactant_graphs.ndata['feature'])
-            product_embeddings = model(product_graphs, product_graphs.ndata['feature'])
+            reactant_embeddings = model(reactant_graphs)
+            product_embeddings = model(product_graphs)
             loss = calculate_loss(reactant_embeddings, product_embeddings, args)
             optimizer.zero_grad()
             loss.backward()
@@ -97,7 +97,7 @@ def evaluate(model, mode, data, args):
         product_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
         all_product_embeddings = []
         for _, product_graphs in product_dataloader:
-            product_embeddings = model(product_graphs, product_graphs.ndata['feature'])
+            product_embeddings = model(product_graphs)
             all_product_embeddings.append(product_embeddings)
         all_product_embeddings = torch.cat(all_product_embeddings, dim=0)
 
@@ -106,7 +106,7 @@ def evaluate(model, mode, data, args):
         reactant_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
         i = 0
         for reactant_graphs, _ in reactant_dataloader:
-            reactant_embeddings = model(reactant_graphs, reactant_graphs.ndata['feature'])
+            reactant_embeddings = model(reactant_graphs)
             ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batch_size, len(data))), dim=1)
             i += args.batch_size
             if torch.cuda.is_available():
