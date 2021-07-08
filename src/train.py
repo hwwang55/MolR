@@ -25,6 +25,11 @@ def train(args, data):
     best_val_mrr = 0
     print('start training...\n')
 
+    print('initial case:')
+    model.eval()
+    evaluate(model, 'valid', valid_data, args)
+    print()
+
     for i in range(args.n_epoch):
         print('epoch %d:' % i)
 
@@ -54,6 +59,7 @@ def train(args, data):
     model.eval()
     evaluate(model, 'test', test_data, args)
 
+    '''
     # save the model and the feature encoder to disk
     print('\nsaving the trained model, hyperparameters, and the feature encoder to disk...')
     if not os.path.exists('../saved/'):
@@ -66,6 +72,7 @@ def train(args, data):
         hp_dict = {'gnn': args.gnn, 'n_layer': args.n_layer, 'n_values': n_values, 'dim': args.dim,
                    'dist_metric': args.dist_metric}
         pickle.dump(hp_dict, f)
+    '''
 
 
 def calculate_loss(reactant_embeddings, product_embeddings, args):

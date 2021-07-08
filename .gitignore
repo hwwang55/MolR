@@ -1,6 +1,6 @@
 # Project exclude paths
 /venv/
 /.idea/
-/src/__pycache__/
 /data/
 /saved/
+/commands.txt
