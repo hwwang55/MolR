@@ -35,9 +35,6 @@ class GNN(torch.nn.Module):
         h = self.gnn_layers[-1](graph, h)
         graph_embedding = self.pooling_layer(graph, h)
 
-        if self.dist_metric == 'dot':
-            graph_embedding = graph_embedding / torch.linalg.norm(graph_embedding, dim=1, keepdim=True)
-            graph_embedding = torch.nan_to_num(graph_embedding)
         if self.gnn == 'gat':
             graph_embedding = torch.squeeze(graph_embedding)
         return graph_embedding

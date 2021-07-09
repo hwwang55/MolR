@@ -24,7 +24,6 @@ def main():
     parser.add_argument('--gnn', type=str, default='gcn', help='name of the GNN model')
     parser.add_argument('--n_layer', type=int, default=2, help='number of GNN layers')
     parser.add_argument('--dim', type=int, default=1024, help='dimension of molecule embeddings')
-    parser.add_argument('--dist_metric', type=str, default='euclidean', help='distance metric of molecule embeddings')
     parser.add_argument('--margin', type=float, default=16.0, help='the margin in contrastive loss')
     parser.add_argument('--l2', type=float, default=1e-7, help='l2 regularization weight')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')

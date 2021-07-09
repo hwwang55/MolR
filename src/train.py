@@ -76,25 +76,14 @@ def train(args, data):
 
 
 def calculate_loss(reactant_embeddings, product_embeddings, args):
-    if args.dist_metric == 'euclidean':
-        dist = torch.cdist(reactant_embeddings, product_embeddings, p=2)
-        pos = torch.diag(dist)
-        mask = torch.eye(args.batch_size)
-        if torch.cuda.is_available():
-            mask = mask.cuda(args.gpu)
-        neg = (1 - mask) * dist + mask * args.margin
-        neg = torch.relu(args.margin - neg)
-        loss = torch.mean(pos) + torch.sum(neg) / args.batch_size / (args.batch_size - 1)
-    elif args.dist_metric == 'dot':
-        dist = torch.matmul(reactant_embeddings, torch.transpose(product_embeddings, 0, 1))
-        pos = torch.diag(dist)
-        mask = torch.eye(args.batch_size)
-        if torch.cuda.is_available():
-            mask = mask.cuda(args.gpu)
-        neg = (1 - mask) * dist
-        loss = -torch.mean(pos) + torch.sum(neg) / args.batch_size / (args.batch_size - 1)
-    else:
-        raise ValueError('unknown distance metric')
+    dist = torch.cdist(reactant_embeddings, product_embeddings, p=2)
+    pos = torch.diag(dist)
+    mask = torch.eye(args.batch_size)
+    if torch.cuda.is_available():
+        mask = mask.cuda(args.gpu)
+    neg = (1 - mask) * dist + mask * args.margin
+    neg = torch.relu(args.margin - neg)
+    loss = torch.mean(pos) + torch.sum(neg) / args.batch_size / (args.batch_size - 1)
     return loss
 
 
@@ -118,12 +107,7 @@ def evaluate(model, mode, data, args):
             i += args.batch_size
             if torch.cuda.is_available():
                 ground_truth = ground_truth.cuda(args.gpu)
-            if args.dist_metric == 'euclidean':
-                dist = torch.cdist(reactant_embeddings, all_product_embeddings, p=2)
-            elif args.dist_metric == 'dot':
-                dist = -torch.matmul(reactant_embeddings, torch.transpose(all_product_embeddings, 0, 1))
-            else:
-                raise ValueError('unknown distance metric')
+            dist = torch.cdist(reactant_embeddings, all_product_embeddings, p=2)
             sorted_indices = torch.argsort(dist, dim=1)
             rankings = ((sorted_indices == ground_truth).nonzero()[:, 1] + 1).tolist()
             all_rankings.extend(rankings)
