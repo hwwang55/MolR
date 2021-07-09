@@ -14,7 +14,7 @@ from dgl.dataloading import GraphDataLoader
 def train(args, data):
     feature_encoder, train_data, valid_data, test_data = data
     n_values = sum([len(feature_encoder[key]) for key in dataloader.attribute_names])
-    model = GNN(args.gnn, args.n_layer, n_values, args.dim, args.dist_metric)
+    model = GNN(args.gnn, args.n_layer, n_values, args.dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2)
     train_dataloader = GraphDataLoader(train_data, batch_size=args.batch_size, shuffle=True, drop_last=True)
 

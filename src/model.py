@@ -5,12 +5,11 @@ from torch.nn import Embedding, ModuleList
 
 
 class GNN(torch.nn.Module):
-    def __init__(self, gnn, n_layer, n_values, emb_dim, dist_metric):
+    def __init__(self, gnn, n_layer, n_values, emb_dim):
         super(GNN, self).__init__()
         self.gnn = gnn
         self.n_layer = n_layer
         self.dim = emb_dim
-        self.dist_metric = dist_metric
         self.embed_layer = Embedding(n_values, emb_dim)
         self.gnn_layers = ModuleList([])
         for i in range(n_layer):
