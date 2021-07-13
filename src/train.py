@@ -14,23 +14,23 @@ from dgl.dataloading import GraphDataLoader
 def train(args, data):
     feature_encoder, train_data, valid_data, test_data = data
     n_values = sum([len(feature_encoder[key]) for key in dataloader.attribute_names])
-    model = GNN(args.gnn, args.n_layer, n_values, args.dim)
+    model = GNN(args.gnn, args.layer, n_values, args.dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2)
-    train_dataloader = GraphDataLoader(train_data, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    train_dataloader = GraphDataLoader(train_data, batch_size=args.batchsize, shuffle=True, drop_last=True)
 
     if torch.cuda.is_available():
         model = model.cuda(args.gpu)
 
     best_model_params = None
     best_val_mrr = 0
-    print('start training...\n')
+    print('start training\n')
 
     print('initial case:')
     model.eval()
     evaluate(model, 'valid', valid_data, args)
     print()
 
-    for i in range(args.n_epoch):
+    for i in range(args.epoch):
         print('epoch %d:' % i)
 
         # train
@@ -44,53 +44,59 @@ def train(args, data):
             optimizer.step()
 
         # evaluate on the validation set
-        model.eval()
         val_mrr = evaluate(model, 'valid', valid_data, args)
 
         # save the best model
         if val_mrr > best_val_mrr:
             best_val_mrr = val_mrr
             best_model_params = deepcopy(model.state_dict())
+
         print()
 
     # evaluation on the test set
-    print('evaluating on the test set...')
+    print('final results on the test set:')
     model.load_state_dict(best_model_params)
-    model.eval()
     evaluate(model, 'test', test_data, args)
-
-    '''
-    # save the model and the feature encoder to disk
-    print('\nsaving the trained model, hyperparameters, and the feature encoder to disk...')
+    
+    # save the model， hyperparameters, and feature encoder to disk
     if not os.path.exists('../saved/'):
+        print('creating directory: ../saved/')
         os.mkdir('../saved/')
     prefix = time.strftime('%Y%m%d%H%M%S', time.localtime())
-    torch.save(best_model_params, '../saved/%s_model.pt' % prefix)
-    with open('../saved/%s_fe.pkl' % prefix, 'wb') as f:
+
+    model_path = '../saved/%s_model.pt' % prefix
+    print('\nsaving the trained model to %s' % model_path)
+    torch.save(best_model_params, model_path)
+
+    fe_path = '../saved/%s_feature_encoder.pkl' % prefix
+    print('saving feature encoder to %s' % fe_path)
+    with open(fe_path, 'wb') as f:
         pickle.dump(feature_encoder, f)
-    with open('../saved/%s_hp.pkl' % prefix, 'wb') as f:
-        hp_dict = {'gnn': args.gnn, 'n_layer': args.n_layer, 'n_values': n_values, 'dim': args.dim,
-                   'dist_metric': args.dist_metric}
+
+    hp_path = '../saved/%s_hyperparameters.pkl' % prefix
+    print('saving hyperparameters to %s' % hp_path)
+    with open(hp_path, 'wb') as f:
+        hp_dict = {'gnn': args.gnn, 'layer': args.layer, 'n_values': n_values, 'dim': args.dim}
         pickle.dump(hp_dict, f)
-    '''
 
 
 def calculate_loss(reactant_embeddings, product_embeddings, args):
     dist = torch.cdist(reactant_embeddings, product_embeddings, p=2)
     pos = torch.diag(dist)
-    mask = torch.eye(args.batch_size)
+    mask = torch.eye(args.batchsize)
     if torch.cuda.is_available():
         mask = mask.cuda(args.gpu)
     neg = (1 - mask) * dist + mask * args.margin
     neg = torch.relu(args.margin - neg)
-    loss = torch.mean(pos) + torch.sum(neg) / args.batch_size / (args.batch_size - 1)
+    loss = torch.mean(pos) + torch.sum(neg) / args.batchsize / (args.batchsize - 1)
     return loss
 
 
 def evaluate(model, mode, data, args):
+    model.eval()
     with torch.no_grad():
         # calculate embeddings of all products as the candidate pool
-        product_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
+        product_dataloader = GraphDataLoader(data, batch_size=args.batchsize)
         all_product_embeddings = []
         for _, product_graphs in product_dataloader:
             product_embeddings = model(product_graphs)
@@ -99,12 +105,12 @@ def evaluate(model, mode, data, args):
 
         # rank
         all_rankings = []
-        reactant_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
+        reactant_dataloader = GraphDataLoader(data, batch_size=args.batchsize)
         i = 0
         for reactant_graphs, _ in reactant_dataloader:
             reactant_embeddings = model(reactant_graphs)
-            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batch_size, len(data))), dim=1)
-            i += args.batch_size
+            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batchsize, len(data))), dim=1)
+            i += args.batchsize
             if torch.cuda.is_available():
                 ground_truth = ground_truth.cuda(args.gpu)
             dist = torch.cdist(reactant_embeddings, all_product_embeddings, p=2)

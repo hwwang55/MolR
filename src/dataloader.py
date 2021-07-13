@@ -22,24 +22,26 @@ class SmilesDataset(dgl.data.DGLDataset):
 
     def to_gpu(self):
         if torch.cuda.is_available():
-            print('moving ' + self.mode + ' data to GPU...')
+            print('moving ' + self.mode + ' data to GPU')
             self.reactant_graphs = [graph.to('cuda:' + str(self.args.gpu)) for graph in self.reactant_graphs]
             self.product_graphs = [graph.to('cuda:' + str(self.args.gpu)) for graph in self.product_graphs]
 
     def save(self):
-        print('saving ' + self.mode + ' data to disk...')
+        print('saving ' + self.mode + ' reactants to ' + self.path + '_reactant_graphs.bin')
+        print('saving ' + self.mode + ' products to ' + self.path + '_product_graphs.bin')
         dgl.save_graphs(self.path + '_reactant_graphs.bin', self.reactant_graphs)
         dgl.save_graphs(self.path + '_product_graphs.bin', self.product_graphs)
 
     def load(self):
-        print('loading ' + self.mode + ' data from disk...')
+        print('loading ' + self.mode + ' reactants from ' + self.path + '_reactant_graphs.bin')
+        print('loading ' + self.mode + ' products from ' + self.path + '_product_graphs.bin')
         # graphs loaded from disk will have a default empty label set: [graphs, labels], so we only take the first item
         self.reactant_graphs = dgl.load_graphs(self.path + '_reactant_graphs.bin')[0]
         self.product_graphs = dgl.load_graphs(self.path + '_product_graphs.bin')[0]
         self.to_gpu()
 
     def process(self):
-        print('processing ' + self.mode + ' data...')
+        print('transforming ' + self.mode + ' data from networkx graphs to DGL graphs')
         for i, (raw_reactant_graph, raw_product_graph) in enumerate(self.raw_graphs):
             if i % 10000 == 0:
                 print('%dk' % (i // 1000))
@@ -85,19 +87,23 @@ def networkx_to_dgl(raw_graph, feature_encoder):
 
 
 def read_data(dataset, mode):
-    print('preprocessing %s data...' % mode)
+    path = '../data/' + dataset + '/' + mode + '.csv'
+    print('preprocessing %s data from %s' % (mode, path))
 
     # saving all possible values of each attribute (only for training data)
     all_values = defaultdict(set)
     graphs = []
 
-    with open('../data/' + dataset + '/' + mode + '.csv') as f:
+    with open(path) as f:
         for line in f.readlines():
             idx, product_smiles, reactant_smiles, _ = line.strip().split(',')
 
             # skip the first line
             if len(idx) == 0:
                 continue
+
+            if int(idx) == 1000:
+                break
 
             if int(idx) % 10000 == 0:
                 print('%dk' % (int(idx) // 1000))
@@ -147,7 +153,7 @@ def get_feature_encoder(all_values):
 
 
 def preprocess(dataset):
-    print('preprocessing %s dataset...' % dataset)
+    print('preprocessing %s dataset' % dataset)
 
     # read all data and get all values for attributes
     all_values, train_graphs = read_data(dataset, 'train')
@@ -158,8 +164,9 @@ def preprocess(dataset):
     feature_encoder = get_feature_encoder(all_values)
 
     # save feature encoder to disk
-    print('saving feature encoder to disk...')
-    with open('../data/' + dataset + '/cache/feature_encoder.pkl', 'wb') as f:
+    path = '../data/' + dataset + '/cache/feature_encoder.pkl'
+    print('saving feature encoder to %s' % path)
+    with open(path, 'wb') as f:
         pickle.dump(feature_encoder, f)
 
     return feature_encoder, train_graphs, valid_graphs, test_graphs
@@ -168,15 +175,18 @@ def preprocess(dataset):
 def load_data(args):
     # if datasets are already cached, skip preprocessing
     if os.path.exists('../data/' + args.dataset + '/cache/'):
-        print('cache found\nloading feature encoder from disk...')
-        with open('../data/' + args.dataset + '/cache/feature_encoder.pkl', 'rb') as f:
+        path = '../data/' + args.dataset + '/cache/feature_encoder.pkl'
+        print('cache found\nloading feature encoder from %s' % path)
+        with open(path, 'rb') as f:
             feature_encoder = pickle.load(f)
         train_dataset = SmilesDataset(args, 'train')
         valid_dataset = SmilesDataset(args, 'valid')
         test_dataset = SmilesDataset(args, 'test')
     else:
         print('no cache found')
-        os.mkdir('../data/' + args.dataset + '/cache/')
+        path = '../data/' + args.dataset + '/cache/'
+        print('creating directory: %s' % path)
+        os.mkdir(path)
         feature_encoder, train_graphs, valid_graphs, test_graphs = preprocess(args.dataset)
         train_dataset = SmilesDataset(args, 'train', feature_encoder, train_graphs)
         valid_dataset = SmilesDataset(args, 'valid', feature_encoder, valid_graphs)
