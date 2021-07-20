@@ -16,7 +16,7 @@ def train(args, data):
     n_values = sum([len(feature_encoder[key]) for key in dataloader.attribute_names])
     model = GNN(args.gnn, args.layer, n_values, args.dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.l2)
-    train_dataloader = GraphDataLoader(train_data, batch_size=args.batchsize, shuffle=True, drop_last=True)
+    train_dataloader = GraphDataLoader(train_data, batch_size=args.batch, shuffle=True, drop_last=True)
 
     if torch.cuda.is_available():
         model = model.cuda(args.gpu)
@@ -83,12 +83,12 @@ def train(args, data):
 def calculate_loss(reactant_embeddings, product_embeddings, args):
     dist = torch.cdist(reactant_embeddings, product_embeddings, p=2)
     pos = torch.diag(dist)
-    mask = torch.eye(args.batchsize)
+    mask = torch.eye(args.batch)
     if torch.cuda.is_available():
         mask = mask.cuda(args.gpu)
     neg = (1 - mask) * dist + mask * args.margin
     neg = torch.relu(args.margin - neg)
-    loss = torch.mean(pos) + torch.sum(neg) / args.batchsize / (args.batchsize - 1)
+    loss = torch.mean(pos) + torch.sum(neg) / args.batch / (args.batch - 1)
     return loss
 
 
@@ -96,7 +96,7 @@ def evaluate(model, mode, data, args):
     model.eval()
     with torch.no_grad():
         # calculate embeddings of all products as the candidate pool
-        product_dataloader = GraphDataLoader(data, batch_size=args.batchsize)
+        product_dataloader = GraphDataLoader(data, batch_size=args.batch)
         all_product_embeddings = []
         for _, product_graphs in product_dataloader:
             product_embeddings = model(product_graphs)
@@ -105,12 +105,12 @@ def evaluate(model, mode, data, args):
 
         # rank
         all_rankings = []
-        reactant_dataloader = GraphDataLoader(data, batch_size=args.batchsize)
+        reactant_dataloader = GraphDataLoader(data, batch_size=args.batch)
         i = 0
         for reactant_graphs, _ in reactant_dataloader:
             reactant_embeddings = model(reactant_graphs)
-            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batchsize, len(data))), dim=1)
-            i += args.batchsize
+            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batch, len(data))), dim=1)
+            i += args.batch
             if torch.cuda.is_available():
                 ground_truth = ground_truth.cuda(args.gpu)
             dist = torch.cdist(reactant_embeddings, all_product_embeddings, p=2)

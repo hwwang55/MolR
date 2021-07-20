@@ -19,7 +19,7 @@ def train(args, data):
         hp = pickle.load(f)
 
     print('building the MolE model...')
-    mole = GNN(hp['gnn'], hp['n_layer'], hp['n_values'], hp['dim'], hp['dist_metric'])
+    mole = GNN(hp['gnn'], hp['n_layer'], hp['n_values'], hp['dim'])
     mole.load_state_dict(torch.load('../saved/' + args.model_file))
 
     if args.finetune:
@@ -38,9 +38,9 @@ def train_with_finetune(args, data, mole):
     left = set(range(len(data))) - set(train_indices)
     valid_indices = np.random.choice(list(left), size=int(0.1 * len(data)), replace=False)
     test_indices = list(left - set(valid_indices))
-    train_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(train_indices), batch_size=args.batch_size)
-    valid_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(valid_indices), batch_size=args.batch_size)
-    test_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(test_indices), batch_size=args.batch_size)
+    train_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(train_indices), batch_size=args.batch)
+    valid_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(valid_indices), batch_size=args.batch)
+    test_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(test_indices), batch_size=args.batch)
 
     best_valid_acc = 0
     best_test_acc = 0
@@ -94,7 +94,7 @@ def train_without_finetune(args, data, mole):
     if torch.cuda.is_available():
         mole = mole.cuda(args.gpu)
 
-    dataloader = GraphDataLoader(data, batch_size=args.batch_size, shuffle=True)
+    dataloader = GraphDataLoader(data, batch_size=args.batch, shuffle=True)
     all_features = []
     all_labels = []
     with torch.no_grad():
