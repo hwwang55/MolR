@@ -102,9 +102,6 @@ def read_data(dataset, mode):
             if len(idx) == 0:
                 continue
 
-            if int(idx) == 1000:
-                break
-
             if int(idx) % 10000 == 0:
                 print('%dk' % (int(idx) // 1000))
 

@@ -2,7 +2,7 @@ import os
 import argparse
 import dataloader
 import train
-from property_prediction import pp_dataloader, pp_train
+from property_pred import pp_dataloader, pp_train
 
 
 def print_setting(args):
@@ -20,14 +20,13 @@ def main():
     # pretraining or chemical reaction prediction
     parser.add_argument('--task', type=str, default='pretrain', help='downstream task')
     parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
-    parser.add_argument('--epoch', type=int, default=10, help='number of epochs')
+    parser.add_argument('--epoch', type=int, default=20, help='number of epochs')
     parser.add_argument('--batch', type=int, default=4096, help='batch size')
     parser.add_argument('--gnn', type=str, default='gcn', help='name of the GNN model')
     parser.add_argument('--layer', type=int, default=2, help='number of GNN layers')
-    parser.add_argument('--dim', type=int, default=512, help='dimension of molecule embeddings')
-    parser.add_argument('--margin', type=float, default=8.0, help='the margin in contrastive loss')
-    parser.add_argument('--l2', type=float, default=1e-7, help='l2 regularization weight')
-    parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
+    parser.add_argument('--dim', type=int, default=1024, help='dimension of molecule embeddings')
+    parser.add_argument('--margin', type=float, default=4.0, help='margin in contrastive loss')
+    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     #'''
 
     '''
@@ -41,7 +40,6 @@ def main():
     parser.add_argument('--pred_model', type=str, default='lr', help='downstream prediction model if not fine-tune')
     parser.add_argument('--n_epoch', type=int, default=20, help='number of epochs if fine-tune')
     parser.add_argument('--batch', type=int, default=128, help='batch size if fine-tune')
-    parser.add_argument('--l2', type=float, default=1e-7, help='l2 regularization weight if fine-tune')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate if fine-tune')
     '''
 
