@@ -2,7 +2,7 @@ import torch
 import pickle
 import numpy as np
 from model import GNN
-from property_prediction.pp_model import PropertyPredictionModel
+from property_pred.pp_model import PropertyPredictionModel
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.nn import BCEWithLogitsLoss
 from dgl.dataloading import GraphDataLoader

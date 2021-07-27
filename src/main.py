@@ -1,8 +1,8 @@
 import os
 import argparse
-import dataloader
+import data_processing
 import train
-from property_pred import pp_dataloader, pp_train
+from property_pred import pp_data_processing, pp_train
 
 
 def print_setting(args):
@@ -14,7 +14,7 @@ def print_setting(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', type=int, default=2, help='the index of gpu device')
+    parser.add_argument('--gpu', type=int, default=0, help='the index of gpu device')
 
     #'''
     # pretraining or chemical reaction prediction
@@ -22,16 +22,17 @@ def main():
     parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
     parser.add_argument('--epoch', type=int, default=20, help='number of epochs')
     parser.add_argument('--batch', type=int, default=4096, help='batch size')
-    parser.add_argument('--gnn', type=str, default='gcn', help='name of the GNN model')
+    parser.add_argument('--gnn', type=str, default='tag', help='name of the GNN model')
     parser.add_argument('--layer', type=int, default=2, help='number of GNN layers')
     parser.add_argument('--dim', type=int, default=1024, help='dimension of molecule embeddings')
     parser.add_argument('--margin', type=float, default=4.0, help='margin in contrastive loss')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--save_model', type=bool, default=False, help='save the trained model to disk')
     #'''
 
     '''
     # molecule property prediction
-    parser.add_argument('--task', type=str, default='property_prediction', help='downstream task')
+    parser.add_argument('--task', type=str, default='property_pred', help='downstream task')
     parser.add_argument('--model_file', type=str, default='model.pt', help='filename of the pretrained model')
     parser.add_argument('--fe_file', type=str, default='fe.pkl', help='filename of the feature encoder')
     parser.add_argument('--hp_file', type=str, default='hp.pkl', help='filename of the hyperparameter dictionary')
@@ -48,10 +49,10 @@ def main():
     print('current working directory: ' + os.getcwd() + '\n')
 
     if args.task == 'pretrain':
-        data = dataloader.load_data(args)
+        data = data_processing.load_data(args)
         train.train(args, data)
-    elif args.task == 'property_prediction':
-        data = pp_dataloader.load_data(args)
+    elif args.task == 'property_pred':
+        data = pp_data_processing.load_data(args)
         pp_train.train(args, data)
 
 

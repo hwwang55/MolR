@@ -14,27 +14,32 @@ class GNN(torch.nn.Module):
         self.feature_len = feature_len
         self.dim = dim
         self.gnn_layers = ModuleList([])
-        if gnn in ['gcn', 'gat', 'sage']:
+        if gnn in ['gcn', 'gat', 'sage', 'tag']:
             for i in range(n_layer):
                 if gnn == 'gcn':
                     self.gnn_layers.append(GraphConv(in_feats=feature_len if i == 0 else dim,
                                                      out_feats=dim,
                                                      activation=None if i == n_layer - 1 else torch.relu))
                 elif gnn == 'gat':
-                    num_heads = 8  # make sure that dim is dividable by num_heads
+                    num_heads = 16  # make sure that dim is dividable by num_heads
                     self.gnn_layers.append(GATConv(in_feats=feature_len if i == 0 else dim,
                                                    out_feats=dim // num_heads,
                                                    activation=None if i == n_layer - 1 else torch.relu,
                                                    num_heads=num_heads))
                 elif gnn == 'sage':
+                    agg = 'pool'
                     self.gnn_layers.append(SAGEConv(in_feats=feature_len if i == 0 else dim,
                                                     out_feats=dim,
                                                     activation=None if i == n_layer - 1 else torch.relu,
-                                                    aggregator_type='mean'))
+                                                    aggregator_type=agg))
+                elif gnn == 'tag':
+                    hops = 2
+                    self.gnn_layers.append(TAGConv(in_feats=feature_len if i == 0 else dim,
+                                                   out_feats=dim,
+                                                   activation=None if i == n_layer - 1 else torch.relu,
+                                                   k=hops))
         elif gnn == 'sgc':
             self.gnn_layers.append(SGConv(in_feats=feature_len, out_feats=dim, k=n_layer))
-        elif gnn == 'tag':
-            self.gnn_layers.append(TAGConv(in_feats=feature_len, out_feats=dim, k=n_layer))
         else:
             raise ValueError('unknown GNN model')
         self.pooling_layer = SumPooling()
@@ -52,5 +57,4 @@ class GNN(torch.nn.Module):
             self.factor = math.sqrt(self.dim) / float(torch.mean(torch.linalg.norm(h, dim=1)))
         h *= self.factor
         graph_embedding = self.pooling_layer(graph, h)
-        #print(torch.mean(torch.linalg.norm(h, dim=1)), torch.mean(torch.linalg.norm(graph_embedding, dim=1)))
         return graph_embedding
