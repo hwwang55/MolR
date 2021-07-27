@@ -60,7 +60,7 @@ def train(args, data):
     evaluate(model, 'test', test_data, args)
     print()
 
-    # save the model and hyperparameters to disk
+    # save the model, hyperparameters, and feature encoder to disk
     if args.save_model:
         if not os.path.exists('../saved/'):
             print('creating directory: ../saved/')
@@ -76,6 +76,8 @@ def train(args, data):
         with open(directory + '/hparams.pkl', 'wb') as f:
             hp_dict = {'gnn': args.gnn, 'layer': args.layer, 'feature_len': feature_len, 'dim': args.dim}
             pickle.dump(hp_dict, f)
+        with open(directory + '/feature_enc.pkl', 'wb') as f:
+            pickle.dump(feature_encoder, f)
 
 
 def calculate_loss(reactant_embeddings, product_embeddings, args):
