@@ -6,34 +6,34 @@ import pysmiles
 from data_processing import networkx_to_dgl
 
 
-class PropertyPredictionDataset(dgl.data.DGLDataset):
+class PropertyPredDataset(dgl.data.DGLDataset):
     def __init__(self, args):
         self.args = args
-        self.path = '../data/property_prediction/' + self.args.dataset
+        self.path = '../data/' + args.dataset + '/' + args.dataset
         self.graphs = []
         self.labels = []
-        super().__init__(name='property_prediction_' + args.dataset)
+        super().__init__(name='property_pred_' + args.dataset)
 
     def to_gpu(self):
         if torch.cuda.is_available():
-            print('moving ' + self.args.dataset + ' dataset to GPU...')
+            print('moving ' + self.args.dataset + ' dataset to GPU')
             self.graphs = [graph.to('cuda:' + str(self.args.gpu)) for graph in self.graphs]
 
     def save(self):
-        print('saving ' + self.args.dataset + ' dataset to disk...')
+        print('saving ' + self.args.dataset + ' dataset to ' + self.path + '.bin')
         dgl.save_graphs(self.path + '.bin', self.graphs, {'label': self.labels})
 
     def load(self):
-        print('loading ' + self.args.dataset + ' dataset from disk...')
+        print('loading ' + self.args.dataset + ' dataset from ' + self.path + '.bin')
         self.graphs, self.labels = dgl.load_graphs(self.path + '.bin')
         self.labels = self.labels['label']
         self.to_gpu()
 
     def process(self):
-        print('loading feature encoder from disk...')
-        with open('../saved/' + self.args.fe_file, 'rb') as f:
+        print('loading feature encoder from ../saved/' + self.args.pretrained_model + '/feature_enc.pkl')
+        with open('../saved/' + self.args.pretrained_model + '/feature_enc.pkl', 'rb') as f:
             feature_encoder = pickle.load(f)
-        print('processing ' + self.args.dataset + ' dataset...')
+        print('processing ' + self.args.dataset + ' dataset')
         with open(self.path + '.csv') as f:
             for idx, line in enumerate(f.readlines()):
                 if idx == 0:
@@ -65,5 +65,5 @@ class PropertyPredictionDataset(dgl.data.DGLDataset):
 
 
 def load_data(args):
-    data = PropertyPredictionDataset(args)
+    data = PropertyPredDataset(args)
     return data

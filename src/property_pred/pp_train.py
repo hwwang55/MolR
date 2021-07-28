@@ -1,3 +1,4 @@
+import sklearn.preprocessing
 import torch
 import pickle
 import numpy as np
@@ -14,13 +15,18 @@ from sklearn.metrics import roc_auc_score
 
 
 def train(args, data):
-    print('loading hyperparameters of MolE from disk...')
-    with open('../saved/' + args.hp_file, 'rb') as f:
-        hp = pickle.load(f)
+    path = '../saved/' + args.pretrained_model + '/'
+    print('loading hyperparameters of pretrained model from ' + path + 'hparams.pkl')
+    with open(path + 'hparams.pkl', 'rb') as f:
+        hparams = pickle.load(f)
 
-    print('building the MolE model...')
-    mole = GNN(hp['gnn'], hp['n_layer'], hp['n_values'], hp['dim'])
-    mole.load_state_dict(torch.load('../saved/' + args.model_file))
+    print('loading pretrained model from ' + path + 'model.pt')
+    mole = GNN(hparams['gnn'], hparams['layer'], hparams['feature_len'], hparams['dim'])
+    if torch.cuda.is_available():
+        mole.load_state_dict(torch.load(path + 'model.pt'))
+        mole = mole.cuda(args.gpu)
+    else:
+        mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
 
     if args.finetune:
         train_with_finetune(args, data, mole)
@@ -91,9 +97,6 @@ def evaluate(model, mode, dataloader):
 
 
 def train_without_finetune(args, data, mole):
-    if torch.cuda.is_available():
-        mole = mole.cuda(args.gpu)
-
     dataloader = GraphDataLoader(data, batch_size=args.batch, shuffle=True)
     all_features = []
     all_labels = []
@@ -116,7 +119,7 @@ def train_without_finetune(args, data, mole):
     if args.pred_model == 'svm':
         pred_model = SVC(probability=True)
     elif args.pred_model == 'lr':
-        pred_model = LogisticRegression()
+        pred_model = LogisticRegression(solver='liblinear')
     elif args.pred_model == 'dt':
         pred_model = DecisionTreeClassifier()
     elif args.pred_model == 'mlp':

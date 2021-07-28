@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, help='the index of gpu device')
 
-    #'''
+    '''
     # pretraining or chemical reaction prediction
     parser.add_argument('--task', type=str, default='pretrain', help='downstream task')
     parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
@@ -28,21 +28,19 @@ def main():
     parser.add_argument('--margin', type=float, default=4.0, help='margin in contrastive loss')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--save_model', type=bool, default=False, help='save the trained model to disk')
-    #'''
-
     '''
+
+    #'''
     # molecule property prediction
     parser.add_argument('--task', type=str, default='property_pred', help='downstream task')
-    parser.add_argument('--model_file', type=str, default='model.pt', help='filename of the pretrained model')
-    parser.add_argument('--fe_file', type=str, default='fe.pkl', help='filename of the feature encoder')
-    parser.add_argument('--hp_file', type=str, default='hp.pkl', help='filename of the hyperparameter dictionary')
+    parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
     parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
     parser.add_argument('--finetune', type=bool, default=False, help='whether fine-tuning the pretrained model')
     parser.add_argument('--pred_model', type=str, default='lr', help='downstream prediction model if not fine-tune')
     parser.add_argument('--n_epoch', type=int, default=20, help='number of epochs if fine-tune')
     parser.add_argument('--batch', type=int, default=128, help='batch size if fine-tune')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate if fine-tune')
-    '''
+    #'''
 
     args = parser.parse_args()
     print_setting(args)
