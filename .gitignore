@@ -1,7 +1,8 @@
 # Project exclude paths
 /venv/
 /.idea/
-/data/USPTO-479k/*
+/data/USPTO-479k/cache
+/data/USPTO-479k/*.csv
 /data/BACE/BACE.bin
 /data/BBBP/BBBP.bin
 /data/ESOL/ESOL.bin
