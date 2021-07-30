@@ -34,12 +34,8 @@ def main():
     # molecule property prediction
     parser.add_argument('--task', type=str, default='property_pred', help='downstream task')
     parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
-    parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
-    parser.add_argument('--finetune', type=bool, default=False, help='whether fine-tuning the pretrained model')
-    parser.add_argument('--pred_model', type=str, default='lr', help='downstream prediction model if not fine-tune')
-    parser.add_argument('--n_epoch', type=int, default=20, help='number of epochs if fine-tune')
-    parser.add_argument('--batch', type=int, default=128, help='batch size if fine-tune')
-    parser.add_argument('--lr', type=float, default=0.01, help='learning rate if fine-tune')
+    parser.add_argument('--dataset', type=str, default='FreeSolv', help='dataset name')
+    parser.add_argument('--batch', type=int, default=1024, help='batch size for calling the pretrained model')
     #'''
 
     args = parser.parse_args()

@@ -1,17 +1,10 @@
-import sklearn.preprocessing
 import torch
 import pickle
-import numpy as np
 from model import GNN
-from property_pred.pp_model import PropertyPredictionModel
-from torch.utils.data.sampler import SubsetRandomSampler
-from torch.nn import BCEWithLogitsLoss
 from dgl.dataloading import GraphDataLoader
-from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import roc_auc_score
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import roc_auc_score, mean_absolute_error, mean_squared_error
 
 
 def train(args, data):
@@ -28,75 +21,6 @@ def train(args, data):
     else:
         mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
 
-    if args.finetune:
-        train_with_finetune(args, data, mole)
-    else:
-        train_without_finetune(args, data, mole)
-
-
-def train_with_finetune(args, data, mole):
-    pred_model = PropertyPredictionModel(mole)
-    if torch.cuda.is_available():
-        pred_model = pred_model.cuda(args.gpu)
-    optimizer = torch.optim.Adam(pred_model.parameters(), lr=args.lr, weight_decay=args.l2)
-    loss_fn = BCEWithLogitsLoss()
-    train_indices = np.random.choice(range(len(data)), size=int(0.8 * len(data)), replace=False)
-    left = set(range(len(data))) - set(train_indices)
-    valid_indices = np.random.choice(list(left), size=int(0.1 * len(data)), replace=False)
-    test_indices = list(left - set(valid_indices))
-    train_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(train_indices), batch_size=args.batch)
-    valid_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(valid_indices), batch_size=args.batch)
-    test_dataloader = GraphDataLoader(data, sampler=SubsetRandomSampler(test_indices), batch_size=args.batch)
-
-    best_valid_acc = 0
-    best_test_acc = 0
-    best_test_auc = 0
-    print('start training...\n')
-
-    for i in range(args.n_epoch):
-        print('epoch %d:' % i)
-
-        # train
-        pred_model.train()
-        for graphs, labels in train_dataloader:
-            pred = torch.squeeze(pred_model(graphs))
-            loss = loss_fn(input=pred, target=labels)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        # evaluate
-        pred_model.eval()
-        train_acc, train_auc = evaluate(pred_model, 'train', train_dataloader)
-        valid_acc, valid_auc = evaluate(pred_model, 'valid', valid_dataloader)
-        test_acc, test_auc = evaluate(pred_model, 'test', test_dataloader)
-
-        # save the best model
-        if valid_acc > best_valid_acc:
-            best_valid_acc = valid_acc
-            best_test_acc = test_acc
-            best_test_auc = test_auc
-        print()
-
-    print('final test acc: %.4f    auc: %.4f' % (best_test_acc, best_test_auc))
-
-
-def evaluate(model, mode, dataloader):
-    all_proba = []
-    all_labels = []
-    with torch.no_grad():
-        for graphs, labels in dataloader:
-            proba = torch.squeeze(torch.sigmoid(model(graphs))).tolist()
-            all_proba.extend(proba)
-            all_labels.extend(labels.tolist())
-    pred = [1.0 if p > 0.5 else 0.0 for p in all_proba]
-    acc = float(np.mean(np.array(pred) == np.array(all_labels)))
-    auc = roc_auc_score(all_labels, all_proba)
-    print('%s acc: %.4f    auc: %.4f' % (mode, acc, auc))
-    return acc, auc
-
-
-def train_without_finetune(args, data, mole):
     dataloader = GraphDataLoader(data, batch_size=args.batch, shuffle=True)
     all_features = []
     all_labels = []
@@ -109,24 +33,40 @@ def train_without_finetune(args, data, mole):
         all_features = torch.cat(all_features, dim=0).cpu().numpy()
         all_labels = torch.cat(all_labels, dim=0).cpu().numpy()
 
-    print('splitting dataset...')
+    print('splitting dataset')
     train_features = all_features[: int(0.8 * len(data))]
     train_labels = all_labels[: int(0.8 * len(data))]
+    valid_features = all_features[int(0.8 * len(data)): int(0.9 * len(data))]
+    valid_labels = all_labels[int(0.8 * len(data)): int(0.9 * len(data))]
     test_features = all_features[int(0.9 * len(data)):]
     test_labels = all_labels[int(0.9 * len(data)):]
 
-    print('training the classification model...')
-    if args.pred_model == 'svm':
-        pred_model = SVC(probability=True)
-    elif args.pred_model == 'lr':
+    if args.dataset in ['BBBP', 'HIV', 'BACE']:
+        print('training the classification model\n')
         pred_model = LogisticRegression(solver='liblinear')
-    elif args.pred_model == 'dt':
-        pred_model = DecisionTreeClassifier()
-    elif args.pred_model == 'mlp':
-        pred_model = MLPClassifier()
+        pred_model.fit(train_features, train_labels)
+        run_classification(pred_model, 'train', train_features, train_labels)
+        run_classification(pred_model, 'valid', valid_features, valid_labels)
+        run_classification(pred_model, 'test', test_features, test_labels)
+    elif args.dataset in ['ESOL', 'FreeSolv', 'Lipophilicity']:
+        print('training the regression model\n')
+        pred_model = DecisionTreeRegressor()
+        pred_model.fit(train_features, train_labels)
+        run_regression(pred_model, 'train', train_features, train_labels)
+        run_regression(pred_model, 'valid', valid_features, valid_labels)
+        run_regression(pred_model, 'test', test_features, test_labels)
     else:
-        raise ValueError('unknown classification model')
-    pred_model.fit(train_features, train_labels)
-    acc = pred_model.score(test_features, test_labels)
-    auc = roc_auc_score(test_labels, pred_model.predict_proba(test_features)[:, 1])
-    print('\ntest acc: %.4f\ntest auc: %.4f' % (acc, auc))
+        raise ValueError('unknown dataset')
+
+
+def run_classification(model, mode, features, labels):
+    train_acc = model.score(features, labels)
+    train_auc = roc_auc_score(labels, model.predict_proba(features)[:, 1])
+    print('%s acc: %.4f   auc: %.4f' % (mode, train_acc, train_auc))
+
+
+def run_regression(model, mode, features, labels):
+    pred = model.predict(features)
+    mae = mean_absolute_error(labels, pred)
+    rmse = mean_squared_error(labels, pred, squared=False)
+    print('%s mae: %.4f   rmse: %.4f' % (mode, mae, rmse))

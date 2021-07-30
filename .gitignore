@@ -1,8 +1,13 @@
 # Project exclude paths
 /venv/
 /.idea/
-/data/
-/saved/
+/data/USPTO-479k/*
+/data/BACE/BACE.bin
+/data/BBBP/BBBP.bin
+/data/ESOL/ESOL.bin
+/data/FreeSolv/FreeSolv.bin
+/data/HIV/HIV.bin
+/data/Lipophilicity/Lipophilicity.bin
 /commands.txt
-/baseline/
+/baseline
 src/eval_on_all_candidates.py

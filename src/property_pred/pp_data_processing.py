@@ -36,16 +36,30 @@ class PropertyPredDataset(dgl.data.DGLDataset):
         print('processing ' + self.args.dataset + ' dataset')
         with open(self.path + '.csv') as f:
             for idx, line in enumerate(f.readlines()):
-                if idx == 0:
+                if idx == 0 or line == '\n':
                     continue
-                line = line.strip().split(',')
-                label, smiles = line[-2], line[-1]
-                # the next line is to remove unnecessary hydrogen atoms that will cause discontinuous node labels
-                smiles = smiles.replace('([H])', '').replace('[H]', '')
+                items = line.strip().split(',')
+                if self.args.dataset == 'BBBP':
+                    smiles, label = items[-1], items[-2]
+                    # the next line is to remove unnecessary hydrogen atoms that will cause discontinuous node labels
+                    smiles = smiles.replace('([H])', '').replace('[H]', '')
+                elif self.args.dataset == 'HIV':
+                    smiles, label = items[0], items[-1]
+                    smiles = smiles.replace('se', 'Se').replace('te', 'Te')
+                elif self.args.dataset == 'BACE':
+                    smiles, label = items[0], items[2]
+                elif self.args.dataset == 'ESOL':
+                    smiles, label = items[-1], items[-2]
+                elif self.args.dataset == 'FreeSolv':
+                    smiles, label = items[-3], items[-2]
+                elif self.args.dataset == 'Lipophilicity':
+                    smiles, label = items[2], items[1]
+                else:
+                    raise ValueError('unknown dataset')
                 raw_graph = pysmiles.read_smiles(smiles, zero_order_bonds=False)
                 dgl_graph = networkx_to_dgl(raw_graph, feature_encoder)
                 self.graphs.append(dgl_graph)
-                self.labels.append(int(label))
+                self.labels.append(float(label))
         self.labels = torch.Tensor(self.labels)
         self.to_gpu()
 
