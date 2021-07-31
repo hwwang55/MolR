@@ -3,12 +3,7 @@
 /.idea/
 /data/USPTO-479k/cache
 /data/USPTO-479k/*.csv
-/data/BACE/BACE.bin
-/data/BBBP/BBBP.bin
-/data/ESOL/ESOL.bin
-/data/FreeSolv/FreeSolv.bin
 /data/HIV/HIV.bin
-/data/Lipophilicity/Lipophilicity.bin
 /commands.txt
 /baseline
 src/eval_on_all_candidates.py
