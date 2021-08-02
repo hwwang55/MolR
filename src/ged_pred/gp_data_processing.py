@@ -48,7 +48,7 @@ class GEDPredDataset(dgl.data.DGLDataset):
         samples = self.sample(molecule_list)
         res = calculate_ged_with_mp(samples, self.args.n_pairs)
 
-        with open(self.path + 'ged.csv', 'w') as f:
+        with open(self.path + 'pairwise_ged.csv', 'w') as f:
             f.writelines('smiles1,smiles2,ged\n')
             for g1, g2, s1, s2, ged in res:
                 self.graphs1.append(networkx_to_dgl(g1, feature_encoder))
