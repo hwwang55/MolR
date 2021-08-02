@@ -3,6 +3,8 @@
 /.idea/
 /data/USPTO-479k/cache
 /data/USPTO-479k/*.csv
+/data/BBBP/sizes.pkl
+/data/BBBP/properties.pkl
 /data/HIV/HIV.bin
 /commands.txt
 /baseline
