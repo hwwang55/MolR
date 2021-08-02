@@ -6,7 +6,7 @@ import numpy as np
 import multiprocessing as mp
 import matplotlib.pyplot as plt
 from model import GNN
-from openbabel import pybel
+#from openbabel import pybel
 from featurizer import MolEFeaturizer
 from dgl.dataloading import GraphDataLoader
 from sklearn.manifold import TSNE
@@ -26,6 +26,7 @@ def get_sssr(args):
         print('loading GED data from ../data/' + args.dataset + '/sssr.pkl')
         with open('../data/' + args.dataset + '/sssr.pkl', 'rb') as f:
             res = pickle.load(f)
+    '''
     else:
         smiles_list = []
         print('processing ' + '../data/' + args.dataset + '/' + args.dataset + '.csv')
@@ -45,7 +46,7 @@ def get_sssr(args):
         print('saving SSSR data to ../data/' + args.dataset + '/sssr.pkl')
         with open('../data/' + args.dataset + '/sssr.pkl', 'wb') as f:
             pickle.dump(res, f)
-    
+    '''
     return res
 
 

@@ -33,19 +33,6 @@ def main():
     '''
 
     '''
-    parser.add_argument('--task', type=str, default='pretrain', help='downstream task')
-    parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
-    parser.add_argument('--epoch', type=int, default=10, help='number of epochs')
-    parser.add_argument('--batch', type=int, default=16, help='batch size')
-    parser.add_argument('--gnn', type=str, default='gcn', help='name of the GNN model')
-    parser.add_argument('--layer', type=int, default=2, help='number of GNN layers')
-    parser.add_argument('--dim', type=int, default=2, help='dimension of molecule embeddings')
-    parser.add_argument('--margin', type=float, default=0.0, help='margin in contrastive loss')
-    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--save_model', type=bool, default=True, help='save the trained model to disk')
-    '''
-
-    '''
     # molecule property prediction
     parser.add_argument('--task', type=str, default='property_pred', help='downstream task')
     parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
