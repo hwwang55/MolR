@@ -41,7 +41,7 @@ class GraphDataset(dgl.data.DGLDataset):
 
 
 class MolEFeaturizer(object):
-    def __init__(self, path_to_model='../saved/gcn_1024', gpu=0):
+    def __init__(self, path_to_model, gpu=0):
         self.path_to_model = path_to_model
         self.gpu = gpu
         with open(path_to_model + '/hparams.pkl', 'rb') as f:
@@ -73,7 +73,11 @@ class MolEFeaturizer(object):
 
 
 def example_usage():
-    model = MolEFeaturizer()
+    model = MolEFeaturizer(path_to_model='../saved/gcn_1024')
     embeddings, flags = model.transform(['C', 'CC', 'ccc'])
     print(embeddings)
     print(flags)
+
+
+if __name__ == '__main__':
+    example_usage()
