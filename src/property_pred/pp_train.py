@@ -3,8 +3,7 @@ import pickle
 from model import GNN
 from dgl.dataloading import GraphDataLoader
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import roc_auc_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import roc_auc_score
 
 
 def train(args, data):
@@ -41,32 +40,15 @@ def train(args, data):
     test_features = all_features[int(0.9 * len(data)):]
     test_labels = all_labels[int(0.9 * len(data)):]
 
-    if args.dataset in ['BBBP', 'HIV', 'BACE']:
-        print('training the classification model\n')
-        pred_model = LogisticRegression(solver='liblinear')
-        pred_model.fit(train_features, train_labels)
-        run_classification(pred_model, 'train', train_features, train_labels)
-        run_classification(pred_model, 'valid', valid_features, valid_labels)
-        run_classification(pred_model, 'test', test_features, test_labels)
-    elif args.dataset in ['ESOL', 'FreeSolv', 'Lipophilicity']:
-        print('training the regression model\n')
-        pred_model = DecisionTreeRegressor()
-        pred_model.fit(train_features, train_labels)
-        run_regression(pred_model, 'train', train_features, train_labels)
-        run_regression(pred_model, 'valid', valid_features, valid_labels)
-        run_regression(pred_model, 'test', test_features, test_labels)
-    else:
-        raise ValueError('unknown dataset')
+    print('training the classification model\n')
+    pred_model = LogisticRegression(solver='liblinear')
+    pred_model.fit(train_features, train_labels)
+    run_classification(pred_model, 'train', train_features, train_labels)
+    run_classification(pred_model, 'valid', valid_features, valid_labels)
+    run_classification(pred_model, 'test', test_features, test_labels)
 
 
 def run_classification(model, mode, features, labels):
     train_acc = model.score(features, labels)
     train_auc = roc_auc_score(labels, model.predict_proba(features)[:, 1])
     print('%s acc: %.4f   auc: %.4f' % (mode, train_acc, train_auc))
-
-
-def run_regression(model, mode, features, labels):
-    pred = model.predict(features)
-    mae = mean_absolute_error(labels, pred)
-    rmse = mean_squared_error(labels, pred, squared=False)
-    print('%s mae: %.4f   rmse: %.4f' % (mode, mae, rmse))

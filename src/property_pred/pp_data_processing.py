@@ -48,12 +48,14 @@ class PropertyPredDataset(dgl.data.DGLDataset):
                     smiles = smiles.replace('se', 'Se').replace('te', 'Te')
                 elif self.args.dataset == 'BACE':
                     smiles, label = items[0], items[2]
-                elif self.args.dataset == 'ESOL':
-                    smiles, label = items[-1], items[-2]
-                elif self.args.dataset == 'FreeSolv':
-                    smiles, label = items[-3], items[-2]
-                elif self.args.dataset == 'Lipophilicity':
-                    smiles, label = items[2], items[1]
+                elif self.args.dataset == 'Tox21':
+                    smiles, label = items[-1], items[11]
+                    smiles = smiles.replace('se', 'Se')
+                    if label == '':
+                        continue
+                elif self.args.dataset == 'ClinTox':
+                    smiles, label = items[0], items[2]
+                    smiles = smiles.replace('[H]', '')
                 else:
                     raise ValueError('unknown dataset')
                 raw_graph = pysmiles.read_smiles(smiles, zero_order_bonds=False)

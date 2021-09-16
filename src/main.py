@@ -18,8 +18,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, help='the index of gpu device')
 
-    '''
-    # pretraining
+    #'''
+    # pretraining / chemical reaction prediction
     parser.add_argument('--task', type=str, default='pretrain', help='downstream task')
     parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
     parser.add_argument('--epoch', type=int, default=20, help='number of epochs')
@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--margin', type=float, default=4.0, help='margin in contrastive loss')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--save_model', type=bool, default=False, help='save the trained model to disk')
-    '''
+    #'''
 
     '''
     # molecule property prediction
@@ -51,14 +51,14 @@ def main():
     parser.add_argument('--feature_mode', type=str, default='concat', help='how to construct the input feature')
     '''
 
-    #'''
+    '''
     # visualization
     parser.add_argument('--task', type=str, default='visualization', help='downstream task')
     parser.add_argument('--subtask', type=str, default='size', help='downstream subtask')
     parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
     parser.add_argument('--batch', type=int, default=1024, help='batch size for calling the pretrained model')
     parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
-    #'''
+    '''
 
     args = parser.parse_args()
     print_setting(args)

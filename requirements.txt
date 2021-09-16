@@ -1,5 +1,5 @@
 torch==1.8.1
-dgl==0.6.1
+dgl-cu110==0.6.1
 pysmiles==1.0.1
 scikit-learn==0.24.2
 networkx==2.5.1

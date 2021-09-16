@@ -2,6 +2,7 @@ import os
 import torch
 import pickle
 import pysmiles
+import matplotlib
 import numpy as np
 import multiprocessing as mp
 import matplotlib.pyplot as plt
@@ -10,8 +11,13 @@ from openbabel import pybel
 from featurizer import MolEFeaturizer
 from dgl.dataloading import GraphDataLoader
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 from networkx.algorithms.similarity import graph_edit_distance
 from property_pred.pp_data_processing import PropertyPredDataset
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+plt.figure(figsize=(7, 4))
 
 
 query_smiles = 'C3=C(C2=CC=C(N1CCC(O)CC1)N=N2)C(=CC(=C3)Cl)Cl'  # num 1196 molecule in BBBP dataset
@@ -122,72 +128,90 @@ def calculate_ged(inputs):
 
 
 def draw(args):
-    data = PropertyPredDataset(args)
-    path = '../saved/' + args.pretrained_model + '/'
-    print('loading hyperparameters of pretrained model from ' + path + 'hparams.pkl')
-    with open(path + 'hparams.pkl', 'rb') as f:
-        hparams = pickle.load(f)
-
-    print('loading pretrained model from ' + path + 'model.pt')
-    mole = GNN(hparams['gnn'], hparams['layer'], hparams['feature_len'], hparams['dim'])
-    if torch.cuda.is_available():
-        mole.load_state_dict(torch.load(path + 'model.pt'))
-        mole = mole.cuda(args.gpu)
-    else:
-        mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
-
-    dataloader = GraphDataLoader(data, batch_size=args.batch)
-    embeddings = []
-    properties = []
-    with torch.no_grad():
-        mole.eval()
-        for graphs_batch, labels_batch in dataloader:
-            embeddings_batch = mole(graphs_batch)
-            embeddings.append(embeddings_batch)
-            properties.append(labels_batch)
-        embeddings = torch.cat(embeddings, dim=0).cpu().numpy()
-        properties = torch.cat(properties, dim=0).cpu().numpy()
-
     if args.subtask == 'reaction':
-        if args.pretrained_model.split('_')[-1] != '2':
-            raise ValueError('the pretrained model should output 2-dimensional embeddings')
-        model = MolEFeaturizer()
-        embeddings, _ = model.transform(['CCO', 'CC=O', 'CC(=O)-O',
-                                         'CC(C)CO', 'CC(C)C=O', 'CC(C)C(=O)O',
-                                         'CCCCCCCCO', 'CCCCCCCC=O', 'CCCCCCCC(=O)O',
-                                         'c1(ccccc1)CO', 'c1(ccccc1)C=O', 'c1(ccccc1)C(=O)O',
-                                         'OCCO', 'O=CC=O', 'OC(=O)C(=O)O'])
-        color = ['r', 'b', 'c', 'g', 'y']
-        for i in range(5):
-            plt.scatter(embeddings[3 * i: 3 * i + 3, 0], embeddings[3 * i: 3 * i + 3, 1], color=color[i])
+        model = MolEFeaturizer('../saved/' + args.pretrained_model)
+        emb, _ = model.transform(['CCO', 'CC=O', 'CC(=O)-O',
+                                  'CCCCCCCCO', 'CCCCCCCC=O', 'CCCCCCCC(=O)O',
+                                  'OCCO', 'O=CC=O', 'OC(=O)C(=O)O'
+                                  ])
+        emb = PCA(n_components=2).fit_transform(emb)
+        color = ['red', 'darkorange', 'blue']
+        plt.plot(emb[0, 0], emb[0, 1], marker='o', color='red', markerfacecolor='none', markersize=8)
+        plt.plot(emb[1, 0], emb[1, 1], marker='^', color='red', markerfacecolor='none', markersize=8)
+        plt.plot(emb[2, 0], emb[2, 1], marker='s', color='red', markerfacecolor='none', markersize=8)
+        plt.plot(emb[3, 0], emb[3, 1], marker='o', color='darkorange', markerfacecolor='none', markersize=8)
+        plt.plot(emb[4, 0], emb[4, 1], marker='^', color='darkorange', markerfacecolor='none', markersize=8)
+        plt.plot(emb[5, 0], emb[5, 1], marker='s', color='darkorange', markerfacecolor='none', markersize=8)
+        plt.plot(emb[6, 0], emb[6, 1], marker='o', color='blue', markerfacecolor='none', markersize=8)
+        plt.plot(emb[7, 0], emb[7, 1], marker='^', color='blue', markerfacecolor='none', markersize=8)
+        plt.plot(emb[8, 0], emb[8, 1], marker='s', color='blue', markerfacecolor='none', markersize=8)
         plt.show()
+        # plt.savefig('visualization/' + args.subtask + '.pdf', bbox_inches='tight')
     else:
+        data = PropertyPredDataset(args)
+        path = '../saved/' + args.pretrained_model + '/'
+        print('loading hyperparameters of pretrained model from ' + path + 'hparams.pkl')
+        with open(path + 'hparams.pkl', 'rb') as f:
+            hparams = pickle.load(f)
+
+        print('loading pretrained model from ' + path + 'model.pt')
+        mole = GNN(hparams['gnn'], hparams['layer'], hparams['feature_len'], hparams['dim'])
+        if torch.cuda.is_available():
+            mole.load_state_dict(torch.load(path + 'model.pt'))
+            mole = mole.cuda(args.gpu)
+        else:
+            mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
+
+        dataloader = GraphDataLoader(data, batch_size=args.batch)
+        emb = []
+        properties = []
+        with torch.no_grad():
+            mole.eval()
+            for graphs_batch, labels_batch in dataloader:
+                embeddings_batch = mole(graphs_batch)
+                emb.append(embeddings_batch)
+                properties.append(labels_batch)
+            emb = torch.cat(emb, dim=0).cpu().numpy()
+            properties = torch.cat(properties, dim=0).cpu().numpy()
+
         if args.subtask == 'size':
             n_quantiles = 4
             sizes = [g.num_nodes() for g in data.graphs]
             thresholds = [np.quantile(sizes, i / n_quantiles) for i in range(1, n_quantiles)]
             labels = np.zeros_like(sizes)
             for i, q in enumerate(thresholds):
-                labels[sizes >= q] = i + 1  # [1, 18), [18, 23), [23, 28), [28, infinity)
+                labels[sizes >= q] = i + 1
+            legend = [r'1 $\leq$ size $<$ 18', r'18 $\leq$ size $<$ 23', r'23 $\leq$ size $<$ 28', r'28 $\leq$ size']
+            colors = ['lightskyblue', 'gold', 'darkorange', 'maroon']
         elif args.subtask == 'property':
             labels = properties
+            thresholds = [0.5]
+            legend = ['non-permeable', 'permeable']
+            colors = ['maroon', 'gold']
         elif args.subtask == 'ged':
             ged = get_ged(args)
             ged = np.array([d if d is not None else upper_bound + 10 for d in ged])
             thresholds = [30, 50]
             labels = np.zeros_like(ged)
             for i, q in enumerate(thresholds):
-                labels[ged >= q] = i + 1  # [0, 30), [30, 50), [50, infinity)
-        elif args.subtask == 'ring_cnt':
+                labels[ged >= q] = i + 1
+            legend = [r'1 $\leq$ GED $<$ 30', r'30 $\leq$ GED $<$ 50', r'50 $\leq$ GED']
+            colors = ['darkorange', 'lightskyblue', 'maroon']
+        elif args.subtask == 'ring':
             ring_cnt = np.array(get_sssr(args))
-            thresholds = [1, 2]
+            thresholds = [1, 2, 3]
             labels = np.zeros_like(ring_cnt)
             for i, q in enumerate(thresholds):
-                labels[ring_cnt >= q] = i + 1  # no-ring, single-ring, and multiple-rings
+                labels[ring_cnt >= q] = i + 1
+            legend = [r'# rings $=$ 0', r'# rings $=$ 1', r'# rings $=$ 2', r'# rings $\geq$ 3']
+            colors = ['lightskyblue', 'gold', 'darkorange', 'maroon']
         else:
             raise ValueError('unknown subtask')
 
         print('calculating TSNE embeddings')
-        tsne = TSNE(random_state=0).fit_transform(embeddings)
-        plt.scatter(tsne[:, 0], tsne[:, 1], s=3, c=labels, cmap='viridis')
+        tsne = TSNE(random_state=0).fit_transform(emb)
+        for i in range(len(thresholds) + 1):
+            plt.scatter(tsne[labels == i, 0], tsne[labels == i, 1], s=3, c=colors[i])
+        plt.legend(legend, loc='upper right', fontsize=9, ncol=1)
         plt.show()
+        # plt.savefig('visualization/' + args.subtask + '.pdf', bbox_inches='tight')
