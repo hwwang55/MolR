@@ -36,11 +36,10 @@ Below is the result of RMSE on QM9 dataset for the task of graph-edit-distance p
 | __MolR-SAGE__ | __0.817__ |
 
 Below is the visualized reactions of alcohol oxidation and aldehyde oxidation using PCA:
-![](https://github.com/hwwang55/MolR/blob/master/reaction.png)
-<img src="https://github.com/hwwang55/MolR/blob/master/reaction.png" alt="drawing" width="200"/>
+<img src="https://github.com/hwwang55/MolR/blob/master/reaction.png" alt="drawing" width="400"/>
 
 Below is the visualized molecule embedding space on BBBP dataset using t-SNE:
-![](https://github.com/hwwang55/MolR/blob/master/space.png)
+<img src="https://github.com/hwwang55/MolR/blob/master/space.png" alt="drawing" width="700"/>
 
 
 For more results, please refer to our paper.
