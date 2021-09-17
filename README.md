@@ -1,10 +1,9 @@
 # MolR
 
 This repository is the PyTorch implementation of MolR ([arXiv]()):
-> Chemical-reaction-aware Molecule Representation Learning  
-Anonymous Author(s)  
+> Chemical-reaction-aware Molecule Representation Learning
 Hongwei Wang, Weijiang Li, Xiaomeng Jin, Heng Ji, Kyunghyun Cho, Martin Burke, Jiawei Han  
-Under review of ICLR 2022
+arXiv Preprint
 
 MolR uses graph neural networks (GNNs) as the molecule encoder, and preserves the equivalence of molecules w.r.t. chemical reactions in the embedding space.
 Specifically, MolR forces the sum of the reactant embeddings and the sum of the product embeddings to be equal for each chemical reaction, which is shown to keep the embedding space well-organized and improve the generalization ability of the model.
@@ -48,7 +47,7 @@ For more results, please refer to our paper.
 
 - `data/`
   - `USPTO-479k/` for chemical reaction prediction
-    - `USPTO-479k.zip`: zipped file containing `train.csv`, `valid.csv`, and `test.csv`. Please unzip this file and put the three csv files under this directory. The cached files of USPTO-479k in DGL format is too large to be uploaded to GitHub. If you want to save the time of pre-processing this dataset, please download them [here]() and put the unzipped `/cache` directory under this directory.
+    - `USPTO-479k.zip`: zipped file containing `train.csv`, `valid.csv`, and `test.csv`. Please unzip this file and put the three csv files under this directory. The cached files of USPTO-479k in DGL format is too large to be uploaded to GitHub. If you want to save the time of pre-processing this dataset, please download them [here](https://drive.google.com/file/d/1BcBlXOELDBUTticzsZTDHQthYP2ASJ5g/view?usp=sharing) and put the unzipped `/cache` directory under this directory.
   - `real_reaction_test/`  for chemical reaction prediction
     - `real_reaction_test.csv`: SMILES of reactants and multiple choices of 16 real questions
   - `BBBP/` for molecule property prediction and visualization
@@ -94,7 +93,8 @@ For more results, please refer to our paper.
   ```
   $ python main.py
   ```
-  __Note__: The default task is set as `--task=pretrain`. Hyper-parameter settings for other tasks are provided in  `main.py`, which should be easy to understand.
+  The default task is set as `--task=pretrain`. Hyper-parameter settings for other tasks are provided in  `main.py`, which should be easy to understand.  
+  __Note__: If you spot CUDA_OUT_OF_MEMORY error under the default hyperparameter setting, please consider decreasing the batch size first (e.g., to 2048). This will decrease the performance but not too much.
 - If you would like to use the pretrained model to process your own molecules and obtain their embeddings, please run
   ```
   $ python featurizer.py
