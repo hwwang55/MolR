@@ -103,7 +103,7 @@ For more results, please refer to our paper.
 
 ### Required packages
 
-The code has been tested running under Python 3.7, with the following packages installed (along with their dependencies):
+The code has been tested running under Python 3.7 and CUDA 11.0, with the following packages installed (along with their dependencies):
 
 - torch == 1.8.1
 - dgl-cu110 == 0.6.1 (can also use dgl == 0.6.1 if run on CPU only)
