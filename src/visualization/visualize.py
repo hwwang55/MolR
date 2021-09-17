@@ -162,7 +162,7 @@ def draw(args):
         else:
             mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
 
-        dataloader = GraphDataLoader(data, batch_size=args.batch)
+        dataloader = GraphDataLoader(data, batch_size=args.batch_size)
         emb = []
         properties = []
         with torch.no_grad():

@@ -15,7 +15,7 @@ def train(args, data):
     feature_len = sum([len(feature_encoder[key]) for key in data_processing.attribute_names])
     model = GNN(args.gnn, args.layer, feature_len, args.dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    train_dataloader = GraphDataLoader(train_data, batch_size=args.batch, shuffle=True, drop_last=True)
+    train_dataloader = GraphDataLoader(train_data, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
     if torch.cuda.is_available():
         model = model.cuda(args.gpu)
@@ -83,13 +83,12 @@ def train(args, data):
 def calculate_loss(reactant_embeddings, product_embeddings, args):
     dist = torch.cdist(reactant_embeddings, product_embeddings, p=2)
     pos = torch.diag(dist)
-    mask = torch.eye(args.batch)
+    mask = torch.eye(args.batch_size)
     if torch.cuda.is_available():
         mask = mask.cuda(args.gpu)
-    # margin = float((torch.mean(pos) + (torch.sum(dist) - torch.sum(pos)) / args.batch / (args.batch - 1)) / 2)
     neg = (1 - mask) * dist + mask * args.margin
     neg = torch.relu(args.margin - neg)
-    loss = torch.mean(pos) + torch.sum(neg) / args.batch / (args.batch - 1)
+    loss = torch.mean(pos) + torch.sum(neg) / args.batch_size / (args.batch_size - 1)
     return loss
 
 
@@ -98,19 +97,19 @@ def evaluate(model, mode, data, args):
     with torch.no_grad():
         # calculate embeddings of all products as the candidate pool
         all_product_embeddings = []
-        product_dataloader = GraphDataLoader(data, batch_size=args.batch)
+        product_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
         for _, product_graphs in product_dataloader:
             product_embeddings = model(product_graphs)
             all_product_embeddings.append(product_embeddings)
         all_product_embeddings = torch.cat(all_product_embeddings, dim=0)
         # rank
         all_rankings = []
-        reactant_dataloader = GraphDataLoader(data, batch_size=args.batch)
+        reactant_dataloader = GraphDataLoader(data, batch_size=args.batch_size)
         i = 0
         for reactant_graphs, _ in reactant_dataloader:
             reactant_embeddings = model(reactant_graphs)
-            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batch, len(data))), dim=1)
-            i += args.batch
+            ground_truth = torch.unsqueeze(torch.arange(i, min(i + args.batch_size, len(data))), dim=1)
+            i += args.batch_size
             if torch.cuda.is_available():
                 ground_truth = ground_truth.cuda(args.gpu)
             dist = torch.cdist(reactant_embeddings, all_product_embeddings, p=2)

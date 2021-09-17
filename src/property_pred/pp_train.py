@@ -20,7 +20,7 @@ def train(args, data):
     else:
         mole.load_state_dict(torch.load(path + 'model.pt', map_location=torch.device('cpu')))
 
-    dataloader = GraphDataLoader(data, batch_size=args.batch, shuffle=True)
+    dataloader = GraphDataLoader(data, batch_size=args.batch_size, shuffle=True)
     all_features = []
     all_labels = []
     with torch.no_grad():

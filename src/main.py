@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--task', type=str, default='pretrain', help='downstream task')
     parser.add_argument('--dataset', type=str, default='USPTO-479k', help='dataset name')
     parser.add_argument('--epoch', type=int, default=20, help='number of epochs')
-    parser.add_argument('--batch', type=int, default=4096, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=4096, help='batch size')
     parser.add_argument('--gnn', type=str, default='tag', help='name of the GNN model')
     parser.add_argument('--layer', type=int, default=2, help='number of GNN layers')
     parser.add_argument('--dim', type=int, default=1024, help='dimension of molecule embeddings')
@@ -37,7 +37,7 @@ def main():
     parser.add_argument('--task', type=str, default='property_pred', help='downstream task')
     parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
     parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
-    parser.add_argument('--batch', type=int, default=1024, help='batch size for calling the pretrained model')
+    parser.add_argument('--batch_size', type=int, default=1024, help='batch size for calling the pretrained model')
     '''
 
     '''
@@ -47,16 +47,16 @@ def main():
     parser.add_argument('--dataset', type=str, default='QM9', help='dataset name')
     parser.add_argument('--n_molecules', type=int, default=1000, help='the number of molecules to be sampled')
     parser.add_argument('--n_pairs', type=int, default=10000, help='the number of molecule pairs to be sampled')
-    parser.add_argument('--batch', type=int, default=1024, help='batch size for calling the pretrained model')
+    parser.add_argument('--batch_size', type=int, default=1024, help='batch size for calling the pretrained model')
     parser.add_argument('--feature_mode', type=str, default='concat', help='how to construct the input feature')
     '''
 
     '''
     # visualization
     parser.add_argument('--task', type=str, default='visualization', help='downstream task')
-    parser.add_argument('--subtask', type=str, default='size', help='downstream subtask')
+    parser.add_argument('--subtask', type=str, default='size', help='subtask type: reaction, property, ged, size, ring')
     parser.add_argument('--pretrained_model', type=str, default='gcn_1024', help='the pretrained model')
-    parser.add_argument('--batch', type=int, default=1024, help='batch size for calling the pretrained model')
+    parser.add_argument('--batch_size', type=int, default=1024, help='batch size for calling the pretrained model')
     parser.add_argument('--dataset', type=str, default='BBBP', help='dataset name')
     '''
 
