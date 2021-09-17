@@ -1,7 +1,7 @@
 # MolR
 
 This repository is the PyTorch implementation of MolR ([arXiv]()):
-> Chemical-reaction-aware Molecule Representation Learning
+> Chemical-reaction-aware Molecule Representation Learning  
 Hongwei Wang, Weijiang Li, Xiaomeng Jin, Heng Ji, Kyunghyun Cho, Martin Burke, Jiawei Han  
 arXiv Preprint
 
@@ -34,7 +34,7 @@ Below is the result of RMSE on QM9 dataset for the task of graph-edit-distance p
 | MolBERT      | 0.937  |
 | __MolR-SAGE__ | __0.817__ |
 
-Below is the visualized reactions of alcohol oxidation and aldehyde oxidation using PCA:
+Below are the visualized reactions of alcohol oxidation and aldehyde oxidation using PCA:
 <img src="https://github.com/hwwang55/MolR/blob/master/reaction.png" alt="drawing" width="400"/>
 
 Below is the visualized molecule embedding space on BBBP dataset using t-SNE:
@@ -80,7 +80,7 @@ For more results, please refer to our paper.
   - `main.py`: main function
   - `model.py`: implementation of GNNs
   - `train.py`: training procedure on USPTO-479k dataset
-- `saved/` (saved pretrained models with the name format of `gnn_dim`)
+- `saved/` (pretrained models with the name format of `gnn_dim`)
   - `gat_1024/`
   - `gcn_1024/`
   - `sage_1024/`
