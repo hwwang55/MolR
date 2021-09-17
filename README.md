@@ -3,26 +3,43 @@
 This repository is the PyTorch implementation of MolR ([arXiv]()):
 > Chemical-reaction-aware Molecule Representation Learning  
 Anonymous Author(s)  
-Under review
+Hongwei Wang, Weijiang Li, Xiaomeng Jin, Heng Ji, Kyunghyun Cho, Martin Burke, Jiawei Han  
+Under review of ICLR 2022
 
 MolR uses graph neural networks (GNNs) as the molecule encoder, and preserves the equivalence of molecules w.r.t. chemical reactions in the embedding space.
 Specifically, MolR forces the sum of the reactant embeddings and the sum of the product embeddings to be equal for each chemical reaction, which is shown to keep the embedding space well-organized and improve the generalization ability of the model.
 MolR achieves substantial gains over state-of-the-art baselines.
-Below is the result of MRR and Hit@1 on the test set of USPTO-479k dataset for the task of chemical reaction prediction:
+Below is the result of Hit@1 on USPTO-479k and real reaction dataset for the task of chemical reaction prediction:
 
-| Metric      | MRR | Hit@1 |
+| Dataset      | USPTO-479k | real reaction |
 | :---------: | :---: | :------:  |
-| Mol2vec      | 0.681  | 0.614      |
-| MolBERT      | 0.708  | 0.623      |
-| __MolR-TAG__ | __0.918__ | __0.882__ |
+| Mol2vec      | 0.614  | 0.313   |
+| MolBERT      | 0.623  | 0.313   |
+| __MolR-TAG__ | __0.882__ | __0.625__ |
 
-Below is the result of AUC on the test set of BBBP, HIV, and BACE datasets for the task of molecule property prediction:
+
+Below is the result of AUC on BBBP, HIV, and BACE datasets for the task of molecule property prediction:
 
 | Dataset      | BBBP  | HIV | BACE |
 | :----------: | :---: | :---:  | :---: |
 | Mol2vec      | 0.872  | 0.769  | 0.862 |
 | MolBERT      | 0.762  | 0.783  | 0.866 |
 | __MolR-GCN__ | __0.890__ | __0.802__ | __0.882__ |
+
+
+Below is the result of RMSE on QM9 dataset for the task of graph-edit-distance prediction:
+
+| Dataset      | QM9  |
+| :----------: | :---: |
+| Mol2vec      | 0.995  |
+| MolBERT      | 0.937  |
+| __MolR-SAGE__ | __0.817__ |
+
+Below is the visualized reactions of alcohol oxidation and aldehyde oxidation using PCA:
+![](https://github.com/hwwang55/MolR/blob/master/reaction.png)
+
+Below is the visualized molecule embedding space on BBBP dataset using t-SNE:
+![](https://github.com/hwwang55/MolR/blob/master/space.png)
 
 
 For more results, please refer to our paper.
@@ -40,7 +57,7 @@ For more results, please refer to our paper.
     - `ged_wrt_1196.pkl`: the cached graph-edit-distance of all molecules w.r.t. No. 1196 molecule
     - `sssr.pkl`: the cached numbers of smallest rings for all molecules
   - `HIV/` for molecule property prediction
-    - `HIV.csv`: the original dataset file. Note that the `HIV.bin` is too large to be uploaded to GitHub. If you want to save the time of pre-processing this dataset, please download it [here]() and put the unzipped `HIV.bin` under this directory.
+    - `HIV.csv`: the original dataset file. Note that the `HIV.bin` is too large to be uploaded to GitHub. If you want to save the time of pre-processing this dataset, please download it [here](https://drive.google.com/file/d/1xFE4BDyQtOWkABs3ufa7uetxz0MiFmh9/view?usp=sharing) and put the unzipped `HIV.bin` under this directory.
   - `BACE/` for molecule property prediction
     - `BACE.csv`: the original dataset
     - `BACE.bin`: the cached dataset in DGL format
@@ -65,10 +82,10 @@ For more results, please refer to our paper.
   - `model.py`: implementation of GNNs
   - `train.py`: training procedure on USPTO-479k dataset
 - `saved/` (saved pretrained models with the name format of `gnn_dim`)
-  - `gat_1024`
-  - `gcn_1024`
-  - `sage_1024`
-  - `tag_1024`
+  - `gat_1024/`
+  - `gcn_1024/`
+  - `sage_1024/`
+  - `tag_1024/`
 
 
 ### Running the code
@@ -82,7 +99,7 @@ For more results, please refer to our paper.
   ```
   $ python featurizer.py
   ```
-  The `example_usage()` function in `featurizer.py` should be easy to understand.
+  Please see `example_usage()` function in `featurizer.py` for details, which should be easy to understand.
 
 ### Required packages
 
