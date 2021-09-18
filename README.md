@@ -2,11 +2,11 @@
 
 This repository is the PyTorch implementation of MolR ([arXiv]()):
 > Chemical-reaction-aware Molecule Representation Learning  
-Hongwei Wang, Weijiang Li, Xiaomeng Jin, Heng Ji, Kyunghyun Cho, Jiawei Han,Martin Burke  
+Hongwei Wang, Weijiang Li, Xiaomeng Jin, Kyunghyun Cho, Heng Ji, Jiawei Han, Martin Burke  
 arXiv Preprint
 
 MolR uses graph neural networks (GNNs) as the molecule encoder, and preserves the equivalence of molecules w.r.t. chemical reactions in the embedding space.
-Specifically, MolR forces the sum of the reactant embeddings and the sum of the product embeddings to be equal for each chemical reaction, which is shown to keep the embedding space well-organized and improve the generalization ability of the model.
+Specifically, MolR forces the sum of the reactant embeddings and the sum of the product embeddings to be equal for each chemical reaction, which is shown to keep the embedding space well-organized and improve the generalization ability of the model.  
 MolR achieves substantial gains over state-of-the-art baselines.
 Below is the result of Hit@1 on USPTO-479k and real reaction dataset for the task of chemical reaction prediction:
 
