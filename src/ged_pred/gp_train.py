@@ -2,7 +2,7 @@ import torch
 import pickle
 from model import GNN
 from dgl.dataloading import GraphDataLoader
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
@@ -49,7 +49,7 @@ def train(args, data):
     test_labels = all_labels[int(0.9 * len(data)):]
 
     print('training the regression model\n')
-    pred_model = DecisionTreeRegressor()
+    pred_model = SVR()
     pred_model.fit(train_features, train_labels)
     run_regression(pred_model, 'train', train_features, train_labels)
     run_regression(pred_model, 'valid', valid_features, valid_labels)
