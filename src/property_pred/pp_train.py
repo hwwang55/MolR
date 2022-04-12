@@ -49,6 +49,6 @@ def train(args, data):
 
 
 def run_classification(model, mode, features, labels):
-    train_acc = model.score(features, labels)
-    train_auc = roc_auc_score(labels, model.predict_proba(features)[:, 1])
-    print('%s acc: %.4f   auc: %.4f' % (mode, train_acc, train_auc))
+    acc = model.score(features, labels)
+    auc = roc_auc_score(labels, model.predict_proba(features)[:, 1])
+    print('%s acc: %.4f   auc: %.4f' % (mode, acc, auc))
